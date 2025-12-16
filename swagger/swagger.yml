@@ -1,0 +1,221 @@
+openapi: 3.0.0
+
+info:
+  title: PlayPaywize
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:5000
+
+paths:
+  /api/v1/user/register:
+    post:
+      tags:
+        - User
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterUserRequest"
+            examples:
+              merchant:
+                value:
+                  name: Alice Merchant
+                  email: alice@pay.com
+                  password: Pass@123
+                  role: MERCHANT
+                  businessName: Zepto
+              admin:
+                value:
+                  name: John Admin
+                  email: john@pay.com
+                  password: Admin@123
+                  role: ADMIN
+                  businessName: ""
+              customer:
+                value:
+                  name: Jane Customer
+                  email: jane@pay.com
+                  password: Cust@123
+                  role: CUSTOMER
+                  businessName: ""
+      responses:
+        201:
+          description: User Registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RegisterUserResponse"
+        400:
+          description: Bad Request
+        409:
+          description: User with this email already exists
+        429:
+          description: Too many attempts try after 5 min
+        500:
+          description: Internal Server Error
+
+  /api/v1/user/login:
+    post:
+      tags:
+        - User
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        200:
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        400:
+          description: Email and password required
+        401:
+          description: Invalid credentials
+        429:
+          description: Too many attempts, try again after 5 minutes
+        500:
+          description: Internal Server Error
+
+  /api/v1/user/profile:
+    get:
+      tags:
+        - User
+      summary: Get profile
+      description: |
+        Fetches the profile of the authenticated user.
+        Only **MERCHANT** and **CUSTOMER** roles are allowed.
+        **ADMIN** is not allowed to access this endpoint.
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Profile fetched successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfileSuccess"
+        401:
+          description: Unauthorized (missing or invalid token)
+        403:
+          description: Forbidden - ADMIN role is not allowed
+        404:
+          description: User not found
+        500:
+          description: Internal Server Error
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    RegisterUserRequest:
+      type: object
+      required:
+        - name
+        - email
+        - password
+        - role
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        role:
+          type: string
+          enum: [MERCHANT, ADMIN, CUSTOMER]
+        businessName:
+          type: string
+
+    RegisterUserResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        userId:
+          type: string
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: priyashah@gmail.com
+        password:
+          type: string
+          example: test@123
+
+    LoginResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        userId:
+          type: string
+        accessToken:
+          type: string
+
+    UserProfileSuccess:
+      type: object
+      properties:
+        user:
+          oneOf:
+            - $ref: "#/components/schemas/MerchantProfile"
+            - $ref: "#/components/schemas/CustomerProfile"
+
+    MerchantProfile:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [MERCHANT]
+        businessName:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CustomerProfile:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [CUSTOMER]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time

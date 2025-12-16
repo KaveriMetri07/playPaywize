@@ -1,0 +1,99 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  password     String
+  role         UserRole @default(MERCHANT)
+  businessName String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // relations
+  refreshTokens        RefreshToken[]
+  wallet               Wallet?
+  ledgers              Ledger[]
+  //transactions  Transaction[]
+  sentTransactions     Transaction[]  @relation("UserSends")
+  receivedTransactions Transaction[]  @relation("UserReceives")
+}
+
+enum UserRole {
+  MERCHANT
+  CUSTOMER
+  ADMIN
+}
+
+model RefreshToken {
+  id    String @id @default(uuid())
+  token String @unique
+
+  userId    String
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+enum TransactionType {
+  CREDIT
+  DEBIT
+}
+
+model Wallet {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  // balance stored in paise (integer). Use BigInt to avoid overflow for large amounts.
+  balance   BigInt   @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Ledger {
+  id String @id @default(uuid())
+
+  amount        BigInt // in paise, positive for credit, negative for debit allowed but we'll use type to determine sign
+  type          TransactionType
+  source        String // e.g. "ADD_MONEY", "PAYOUT", "REVERSAL", "FEE"
+  referenceId   String? // optional external transaction/payout id
+  balanceAfter  BigInt // wallet balance after applying this entry (in paise)
+  createdAt     DateTime        @default(now())
+  userId        String
+  transactionId String?
+
+  user        User         @relation(fields: [userId], references: [id])
+  Transaction Transaction? @relation(fields: [transactionId], references: [id])
+}
+
+model Transaction {
+  id         String            @id @default(uuid())
+  userId     String //sender
+  receiverId String? //receiver
+  type       TransactionType
+  amount     BigInt
+  irl        String            @unique
+  remarks    String?
+  status     TransactionStatus
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+  user       User              @relation("UserSends", fields: [userId], references: [id])
+  receiver   User?             @relation("UserReceives", fields: [receiverId], references: [id])
+  ledgers    Ledger[]
+}
+
+enum TransactionStatus {
+  INITIATED
+  PROCESSING
+  SUCCESS
+  FAILED
+}
+
