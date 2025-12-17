@@ -24,6 +24,9 @@ app.use("/api-docs", swaggerui.serve, swaggerui.setup(swaggerDocument));
 app.use("/admin/queues", serverAdapter.getRouter());
 
 app.use("/api/v1/", indexRouter);
+app.get("/hello", (req, res) => {
+  res.send("hello spoorti");
+});
 
 app.use(errorHandler);
 
