@@ -4,9 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon app.js",
-    "worker": "nodemon workers/transaction.worker.js"
+    "start": "node app.js",
+    "worker": "nodemon workers/transaction.worker.js",
+    "worker:start": "node workers/transaction.worker.js"
   },
   "keywords": [],
   "author": "",

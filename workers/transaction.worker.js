@@ -1,5 +1,5 @@
 import { Worker } from "bullmq";
-import { redis } from "../database/redisClient.js";
+import redis from "../database/redisClient.js";
 import { parseBigIntFields } from "../utils/bigInt_parser.js";
 import { updateTransactionStatus } from "../modules/repository/transaction.repository.js";
 import {
