@@ -9,6 +9,9 @@ import swaggerui from "swagger-ui-express";
 import YAML from "yamljs";
 import path from "path";
 import { serverAdapter } from "./bullmq/bull-board.js";
+import { tryCatch } from "bullmq";
+import prisma from "./database/prismaClient.js";
+import { timeStamp } from "console";
 
 const app = express();
 
@@ -22,6 +25,26 @@ app.use(express.json());
 app.use(cookieParser());
 app.use("/api-docs", swaggerui.serve, swaggerui.setup(swaggerDocument));
 app.use("/admin/queues", serverAdapter.getRouter());
+
+app.get("/health", async (req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    await redis.ping();
+    return res.status(200).json({
+      status: "ok",
+      service: "playpaywize-backend",
+      db: "up",
+      redis: "up",
+      timeStamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    return res.status(503).json({
+      status: "down",
+      error: error.message,
+      timeStamp: new Date().toISOString(),
+    });
+  }
+});
 
 app.use("/api/v1/", indexRouter);
 app.get("/hello", (req, res) => {
