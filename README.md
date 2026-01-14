@@ -46,7 +46,7 @@ This project is intentionally built beyond basic CRUD to model how money systems
 ## Installation
 
 ```bash
-git clone https://github.com/<your-username>/playpaywize.git
+git clone https://github.com/KaveriMetri07/playpaywize.git
 cd playpaywize
 npm install
 ````
