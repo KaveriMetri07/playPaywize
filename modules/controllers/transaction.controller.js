@@ -16,6 +16,7 @@ export const startTransaction = async (req, res) => {
     const userId = req.user.id; // ← from JWT token middleware
 
     const { customerId, amount, remarks } = req.body;
+    logger.info(" transaction initiation ");
     if (req.user.role !== "MERCHANT") {
       return res
         .status(403)
